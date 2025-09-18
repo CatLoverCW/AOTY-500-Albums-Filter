@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Album Recommendation</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+</head>
+<body>
+
+<!-- Contrasting text accessability button-->
+<div class="accessibility-container">
+    <button id="contrastButton" class="accessibility-button" title="Toggle High Contrast">
+        &#128065; <!-- Eye icon -->
+    </button>
+    <!-- Larger text accessability button -->
+    <button id="zoomButton" class="accessibility-button" title="Toggle Text Size">
+        &#128269; <!-- Magnifying glass icon -->
+    </button>
+</div>
+
+    <!-- Title of the page -->
+    <div class ='title'>Album Recommendation Generator </div>
+
+    <!-- Navigation Bar leading to different webpages -->
+    <div class="topnav">
+    <a href="home.html">Home</a>
+    <a href="Javascript Graph.html">Interactive Graph</a>
+    </div>
+
+    <div class="recommendation-container">
+        <!-- box user can input genre to filter by (string)-->
+        <div class="input-group">
+            <label for="genre">Preferred Genre:</label>
+            <input type="text" id="genre" placeholder="Enter a genre">
+        </div>
+        
+        <!-- box user can input number of recommendations (interger) -->
+        <div class="input-group">
+            <label for="numRecommendations">Number of Recommendations (Max 10):</label>
+            <input type="number" id="numRecommendations" value="5" max="10">
+        </div>
+        
+        <!-- box user can input sort by year using yes or no (boolean)--> 
+        <div class="input-group">
+            <label for="sortByYear">Sort by oldest to newest? (Yes/No):</label>
+            <input type="text" id="sortByYear" placeholder="Yes or No">
+        </div>
+        
+        <!-- button user presses to get list of recommended albums -->
+        <div class="button-group">
+            <button onclick="recommendAlbums()">Get Recommendations</button>
+        </div>
+    
+        <!-- Div where the listed out recommended albums will be held -->
+        <div id="recommendations" class="recommendations-container"></div>
+   
+
+        <!-- Button to trigger CSV saving -->
+        <button onclick="saveToCSV()">Save and Display CSV</button>
+
+        <!-- Area to display the created CSV data -->
+        <pre id="csvDataDisplay"></pre>
+    </div>
+    
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <script>
+        let albums = [];
+
+        // Function to extract the year from the release_date string
+        function extractYear(dateString) {
+            const date = new Date(dateString);  // Convert string to Date object
+            return date.getFullYear();  // Get the year from the Date
+        }
+
+        // Function to load CSV data and initialize the albums array
+        function loadCSV() {
+            d3.csv('CSVS/filtered_aoty.csv').then(function(data) {
+                albums = data.map(d => ({
+                    id: d.id,
+                    title: d.title,
+                    artist: d.artist,
+                    genres: d.genres ? d.genres.split(',').map(g => g.trim()) : [],
+                    release_date: extractYear(d.release_date),
+                    user_score: +d.user_score
+                })).filter(a => !isNaN(a.release_date) && !isNaN(a.user_score));  // Ensure valid data
+            }).catch(function(error) {
+                console.error('Error loading CSV file:', error);
+            });
+        }
+
+        // Function to recommend albums based on user input
+        function recommendAlbums() {
+            const genreInput = document.getElementById('genre').value.toLowerCase();
+            const numRecommendations = parseInt(document.getElementById('numRecommendations').value);
+            const sortByYear = document.getElementById('sortByYear').value.toLowerCase() === 'Yes';
+
+            // Filter albums by genre
+            const recommended = albums.filter(album => 
+                album.genres.some(genre => genre.toLowerCase().includes(genreInput))
+            );
+
+            // Sort by release year if specified
+            if (sortByYear) {
+                recommended.sort((a, b) => a.release_date - b.release_date);  // Ascending order
+            } else {
+                recommended.sort((a, b) => b.release_date - a.release_date);  // Descending order
+            }
+
+            // Limit recommendations to the specified number
+            const recommendationsToShow = recommended.slice(0, numRecommendations);
+
+            // Display the recommendations
+            const recommendationsDiv = document.getElementById('recommendations');
+            recommendationsDiv.innerHTML = '';  // Clear previous recommendations
+
+            if (recommendationsToShow.length > 0) {
+                recommendationsToShow.forEach(album => {
+                    const albumDiv = document.createElement('div');
+                    albumDiv.innerHTML = `<strong>${album.title}</strong> by ${album.artist} (Released: ${album.release_date}) - Score: ${album.user_score}<br>Genres: ${album.genres.join(', ')}`;
+                    recommendationsDiv.appendChild(albumDiv);
+                });
+            } else {
+                recommendationsDiv.innerHTML = 'No recommendations found.';
+            }
+        }
+
+        // Load CSV data when the page is ready
+        loadCSV();
+
+// Variable to hold the CSV content (in-memory)
+let csvContent = 'Genre,Albums Printed,Response\n';
+
+// Function to save the user data to a CSV file
+function saveToCSV() {
+    const genre = document.getElementById('genre').value;
+    const numAlbums = document.getElementById('numRecommendations').value;
+    const sortByYear = document.getElementById('sortByYear').value.toLowerCase();
+
+    // Validate input
+    if (!genre || !numAlbums || !sortByYear) {
+        alert('Please fill in all fields');
+        return;
+    }
+
+    // Append the new data to the csvContent
+    csvContent += `${genre},${numAlbums},${sortByYear}\n`;
+
+    // Display the CSV data immediately
+    document.getElementById('csvDataDisplay').innerText = csvContent;
+
+    // Optionally, you can create a file for downloading the accumulated data
+    const blob = new Blob([csvContent], { type: 'text/csv' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = 'user_data.csv';
+    link.click();
+}
+
+
+  // Adding event listeners to the accessability buttons 
+  document.addEventListener("DOMContentLoaded", function () {
+        const contrastButton = document.getElementById("contrastButton");
+        const zoomButton = document.getElementById("zoomButton");
+        const body = document.body;
+
+        contrastButton.addEventListener("click", function () {
+            body.classList.toggle("high-contrast");
+        });
+
+        zoomButton.addEventListener("click", function () {
+            body.classList.toggle("large-text");
+        });
+    });
+
+</script>
+</body>
+</html>

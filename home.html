@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="style.css">
+    <title>Albums Of The Year</title>
+</head>
+<body>
+
+<!-- Contrasting text accessability button-->
+  <div class="accessibility-container">
+    <button id="contrastButton" class="accessibility-button" title="Toggle High Contrast">
+        &#128065; <!-- Eye icon -->
+    </button>
+    <!-- Larger text accessability button -->
+    <button id="zoomButton" class="accessibility-button" title="Toggle Text Size">
+        &#128269; <!-- Magnifying glass icon -->
+    </button>
+</div>
+
+<!-- Title of the page -->
+<div class ='title'>Does The Genre Of An Album Affect It's Popularity? </div>
+
+<!-- Navigation Bar leading to different webpages -->
+<div class="topnav">
+  <a href="Javascript Graph.html">Interactive Graph</a>
+  <a href="Recommendation.html">Recommend an album </a>
+</div>
+
+<!-- Text that will be between the two images, informing more about my project -->
+<div class="homepage_text">I have a dataset of the 500 highest rated albums from the Album Of The Year Website which includes the artist, popularity, release date, genre and user score. The goal of this project is to find if an album's genre affects its popularity. To determine if an album's genre does affect its popularity I will be visualsing the data from a dataset which comprises of the 500 highest rated albums on the album of the year website to determine if i can find evidence that an album's genre does or doesn't affect its popularity.  </div>
+
+<!-- Image of Python Graph (Piechart) -->
+<div class="box image-container">
+  <img src="IMAGES/Piechart.png" alt="Piechart Image" class="Piechart">
+</div>
+<div class = homepage_text>This piechart shows what genres make up the 500 album dataset. Based off this piechart, the 'rock' genre appears the most in this dataset.</div>
+
+<!-- Image of Python Graph (Barchart) -->
+<div class="box image-container">
+  <img src="IMAGES/Barchart.png" alt="Barchart Image" class="Barchart">
+</div>
+<div class = homepage_text>This bar chart shows which artists has the most albums appearing on the dataset. Daid Bowie appears to be the most popular artist in this dataset due to him having 6 albums appearing on the dataset, more than any other artist.</div>
+
+<script>
+  // Event listeners to the accessability buttons 
+  document.addEventListener("DOMContentLoaded", function () {
+        const contrastButton = document.getElementById("contrastButton");
+        const zoomButton = document.getElementById("zoomButton");
+        const body = document.body;
+
+        contrastButton.addEventListener("click", function () {
+            body.classList.toggle("high-contrast");
+        });
+
+        zoomButton.addEventListener("click", function () {
+            body.classList.toggle("large-text");
+        });
+    });
+</script>
+
+</body>
+</html>

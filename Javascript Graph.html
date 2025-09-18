@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="style.css">
+    <title>Javascript Graph</title>
+</head>
+<body>
+
+<!-- Contrasting text accessability button-->
+<div class="accessibility-container">
+    <button id="contrastButton" class="accessibility-button" title="Toggle High Contrast">
+        &#128065; <!-- Eye icon -->
+    </button>
+    <!-- Larger text accessability button -->
+    <button id="zoomButton" class="accessibility-button" title="Toggle Text Size">
+        &#128269; <!-- Magnifying glass icon -->
+    </button>
+</div>
+
+<!-- Title of the page -->
+<div class ='title'>Album Scatter Graph </div>
+
+<!-- Navigation Bar leading to different webpages -->
+<div class="topnav">
+    <a href="home.html">Home</a>
+    <a href="Recommendation.html">Recommend an album</a>
+  </div>
+  
+
+<!-- Box where user can search for specific artist or genre -->
+<input type="text" id="searchBox" placeholder="Search by artist or genre">
+
+<!-- Div where the graph will be displayed -->
+<div id="graph"></div>
+
+<!-- These script sources are for the Plotly and D3 libraries -->
+    <script src="https://cdn.plot.ly/plotly-3.0.1.min.js" charset="utf-8"></script>
+<script src="https://d3js.org/d3.v6.min.js"></script>
+
+<script>
+
+// Just declaring the album variables here which will be intitalized in the loadCSV function :)
+let albums = []; 
+let filteredAlbums = [];
+
+// Colours to be used in graph for each different genre
+const colors = ['red', 'blue', 'green', 'purple', 'orange', 'cyan', 'magenta', 'brown', 'pink', 'black', 'yellow', 'gray', 'lightblue', 'lightgreen', 'lightred', 'lightyellow', 'lightorange', 'lightpink', 'lightcyan', 'lightmagenta', 'lightbrown', 'lightgray', 'darkblue', 'darkgreen', 'darkred', 'darkyellow', 'darkorange', 'darkpink', 'darkcyan', 'darkmagenta', 'darkbrown', 'darkgray', 'darklightblue', 'darklightgreen', 'darklightred', 'darklightyellow', 'darklightorange', 'darklightpink', 'darklightcyan', 'darklightmagenta', 'darklightbrown', 'darklightgray'];
+
+// Broad genre keywords used for categorization
+const genreKeywords = ['hip hop','rock','pop','jazz','country','folk','electronic','rap','metal','ambient','neo-psychedelia','krautrock','samba', 'mpb','samba-rock','fusion','chiptune', 'synthpop','classical', 'soul','bop','dance','punk','salsa','funk','hop','americana','new','house','r&b','bossa','bass','idm', 'minimalism', 'sequencer', 'post-hardcore', 'tropicália', 'vapor-wave'];
+
+// Function to extract the year from the release_date column in the CSV file
+function extractYear(dateString) {
+    const date = new Date(dateString);  // Convert the string to a Date object
+    return date.getFullYear();  // Extracting the year
+}
+
+// Function to match an album to a broad genre category
+function getBroadGenre(genresString) {
+    let genresArray = genresString ? genresString.split(',').map(g => g.trim().toLowerCase()) : []; // Ensuring that genresArray is an actual array
+    return genreKeywords.find(keyword => genresArray.some(genre => genre.includes(keyword))) || 'other'; // Default to 'other' if no matching keyword (genre) is found
+}
+
+// Function is used to load the CSV file and extract data used in the graph
+function loadCSV() {
+    d3.csv('CSVS/filtered_aoty.csv').then(function(data) {
+        albums = data.map(d => ({
+            id: d.id,   // Getting the id (The ranking of the album of the album) from the CSV file
+            title: d.title, //  Getting the title of the album from the CSV file
+            artist: d.artist, // Getting the artist of the album from the CSV file
+            genres: d.genres ? d.genres.split(',').map(g => g.trim()) : [], // Convert genre string to an array
+            broadGenre: getBroadGenre(d.genres), // Match genre to a broad category
+            release_date: extractYear(d.release_date),  // Only getting the year from the release_date column in the CSV file
+            user_score: +d.user_score // Getting the user score of the album from the CSV file  
+        })).filter(a => !isNaN(a.release_date) && !isNaN(a.user_score));  // Filtering invalid rows
+
+        filteredAlbums = [...albums];  // Making sure that filteredAlbums is initialized with albums
+        updateGraph(); 
+    }).catch(function(error) {
+        console.error('Error loading CSV file:', error); // Logging any errors to the console (for debugging purposes :D)
+    });
+}
+
+// Function to update the graph
+function updateGraph() {    
+    const colorsForAlbums = filteredAlbums.map(album => {
+        let color = 'gray';  // Default color if genre is not found
+        const broadGenre = getBroadGenre(album.genres.join(', ')); // Ensure it's a string before passing
+        const index = genreKeywords.indexOf(broadGenre);
+        if (index !== -1) {
+            color = colors[index % colors.length]; // Assign a color based on broad genre index
+        }
+        return color;
+    });
+
+    // Creating the trace for the graph
+    const trace = {
+        x: filteredAlbums.map(a => a.release_date),
+        y: filteredAlbums.map(a => a.user_score),
+        mode: 'markers',
+        marker: { size: 10, color: colorsForAlbums },
+        text: filteredAlbums.map(a => `${a.title} by ${a.artist}<br>Genre: ${a.genres.join(', ')}<br>Score: ${a.user_score}`), // The text that'll be revealed when hovering over plot points
+        hovertemplate: // How the text will be listed out and formatted 
+            "<b>%{text}</b><br>" +
+            "Release Year: %{x}<br>" +
+            "User Score: %{y}<extra></extra>"
+    };
+
+    // Layout tto be used in the graph
+    const layout = {
+        title: 'Best Rated Albums',
+        xaxis: {
+            title: 'Release Year',
+            range: [1950, 2025],  // Limiting the range of years
+            dtick: 10  // Adds ticks every 10 years
+        },
+        yaxis: {
+            title: 'User Score',
+            range: [85, 95], // Limiting the range of user score
+            dtick: 1  // Adds ticks every 1 rating
+        }
+    };
+
+    Plotly.newPlot('graph', [trace], layout);
+}
+
+// Event listener to update the graph when the user types in the search box for a specific genre or artist
+document.getElementById('searchBox').addEventListener('input', e => {
+    const term = e.target.value.toLowerCase();
+    filteredAlbums = albums.filter(a => a.artist.toLowerCase().includes(term) || a.broadGenre.includes(term));
+    updateGraph();
+});
+
+// Loading the CSV file when the page is loaded 
+document.addEventListener('DOMContentLoaded', loadCSV);
+
+  // Adding event listeners to the accessability buttons 
+  document.addEventListener("DOMContentLoaded", function () {
+        const contrastButton = document.getElementById("contrastButton");
+        const zoomButton = document.getElementById("zoomButton");
+        const body = document.body;
+
+        contrastButton.addEventListener("click", function () {
+            body.classList.toggle("high-contrast");
+        });
+
+        zoomButton.addEventListener("click", function () {
+            body.classList.toggle("large-text");
+        });
+    });
+
+</script>
+
