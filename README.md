@@ -13,5 +13,5 @@ Python:
 2. Pandas
 
 Javascript:
-1.Plotly
-2.D3 JS
+1. Plotly
+2. D3 JS
